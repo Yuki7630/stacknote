@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# env files
+.env
+.env*.local
+
+# mock-cloud SQLite database (never commit)
+mock-cloud/data/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# misc
+*.tsbuildinfo
+.DS_Store
+
+# coursework files and archives
+*.docx
+*.rar
+
+# AI assistant config
+CLAUDE.md
+AGENTS.md
+.claude/
+
+# editor config
+.vscode/
