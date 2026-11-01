@@ -1,96 +1,95 @@
 # StackNote
 
-A block-based note-taking app with local-first storage and REST sync. Notes are made of text, list
-(bullet or checkbox) and table blocks. Every edit is saved on the device first and synced to a server
-afterwards, so the app keeps working offline.
+แอปจดโน้ตแบบบล็อกที่ทำงานแบบ local-first และซิงก์ข้อมูลผ่าน REST API โน้ตหนึ่งฉบับประกอบด้วย
+บล็อกข้อความ รายการ (bullet หรือ checkbox) และตาราง ทุกการแก้ไขจะบันทึกลงเครื่องทันทีแล้วจึงซิงก์กับเซิร์ฟเวอร์
+จึงใช้งานได้แม้ออฟไลน์
 
-The server is a local mock of a cloud backend, built to develop and test the sync logic. It is not a
-deployed service.
+เซิร์ฟเวอร์เป็นคลาวด์จำลองที่รันในเครื่อง สร้างขึ้นเพื่อพัฒนาและทดสอบระบบซิงก์ ไม่ได้ deploy ใช้งานจริง
 
-| Note list | Editor | Drag to reorder |
+| รายการโน้ต | หน้าแก้ไข | ลากเรียงบล็อก |
 |---|---|---|
-| ![Note list](screenshots/note-list.jpg) | ![Editor](screenshots/editor.jpg) | ![Dragging a block](screenshots/drag.jpg) |
+| ![รายการโน้ต](screenshots/note-list.jpg) | ![หน้าแก้ไข](screenshots/editor.jpg) | ![ลากเรียงบล็อก](screenshots/drag.jpg) |
 
-## Features
+## ฟีเจอร์
 
-- Text, bullet list, checklist and table blocks
-- Drag to reorder blocks
-- Search across notes
-- Export a table to CSV
-- Offline editing, with a sync status indicator (synced / syncing / offline / error)
-- Sync on app start, on return to the foreground and after typing stops, plus an optional auto sync
+- บล็อกข้อความ, bullet list, checklist และตาราง
+- ลากเพื่อเรียงลำดับบล็อก
+- ค้นหาข้อความในโน้ตทั้งหมด
+- ส่งออกตารางเป็นไฟล์ CSV
+- แก้ไขขณะออฟไลน์ได้ และมีไอคอนแสดงสถานะการซิงก์ (synced / syncing / offline / error)
+- ซิงก์เมื่อเปิดแอป เมื่อกลับเข้าแอป และหลังหยุดพิมพ์ พร้อมตัวเลือก auto sync
 
-## Tech stack
+## เทคโนโลยีที่ใช้
 
-| Part | Technology |
+| ส่วน | เทคโนโลยี |
 |---|---|
-| App | React Native, Expo SDK 57, TypeScript (strict), expo-router, zustand, AsyncStorage |
-| Server | Node.js, Express, SQLite (better-sqlite3, WAL mode), zod |
+| แอป | React Native, Expo SDK 57, TypeScript (strict), expo-router, zustand, AsyncStorage |
+| เซิร์ฟเวอร์ | Node.js, Express, SQLite (better-sqlite3, โหมด WAL), zod |
 
-## How sync works
+## การทำงานของระบบซิงก์
 
-1. An edit is saved locally and the note is marked dirty.
-2. Dirty notes are pushed with `PUT /notes/:id`.
-3. Changes since the last sync are pulled with `GET /notes?since=<ms>` and merged.
+1. เมื่อแก้ไข ระบบจะบันทึกลงเครื่องและทำเครื่องหมายโน้ตว่า `dirty`
+2. ส่งโน้ตที่เป็น `dirty` ขึ้นเซิร์ฟเวอร์ด้วย `PUT /notes/:id`
+3. ดึงการเปลี่ยนแปลงตั้งแต่การซิงก์ครั้งล่าสุดด้วย `GET /notes?since=<ms>` แล้วนำมารวมกับข้อมูลในเครื่อง
 
-- **Conflicts:** last-write-wins by `updatedAt`. The server only accepts a note that is newer than its copy.
-- **Deletes:** soft deletes, so other devices learn about them.
-- **Failures:** a failed sync keeps the local data and the note stays dirty for the next attempt.
-- **Server access:** the UI and stores only talk to a `CloudAdapter` interface, so the mock can be replaced
-  without changing them.
+- **ข้อมูลขัดแย้ง:** ใช้ last-write-wins โดยดูจาก `updatedAt` เซิร์ฟเวอร์จะรับเฉพาะโน้ตที่ใหม่กว่าฉบับที่มีอยู่
+- **การลบ:** ใช้ soft delete เพื่อให้อุปกรณ์อื่นรู้ว่าโน้ตถูกลบ
+- **ซิงก์ไม่สำเร็จ:** ข้อมูลในเครื่องไม่หาย และโน้ตยังเป็น `dirty` เพื่อรอส่งในรอบถัดไป
+- **การเชื่อมต่อเซิร์ฟเวอร์:** UI และ store ติดต่อผ่าน interface `CloudAdapter` เท่านั้น
+  จึงเปลี่ยนจากคลาวด์จำลองเป็นบริการอื่นได้โดยไม่ต้องแก้ไขสองส่วนนี้
 
-## Getting started
+## วิธีรัน
 
-You need Node.js. To run on a phone, you also need Expo Go (SDK 57) and the same Wi-Fi as the computer.
+ต้องติดตั้ง Node.js และหากจะรันบนมือถือ ต้องมี Expo Go (SDK 57) และเชื่อมต่อ Wi-Fi เดียวกับคอมพิวเตอร์
 
-**1. Start the server**
+**1. เริ่มเซิร์ฟเวอร์**
 
 ```bash
 cd mock-cloud
 npm install
-npm run dev        # listens on 0.0.0.0:4000
-npm run db:seed    # optional: adds sample notes
+npm run dev        # รอรับการเชื่อมต่อที่ 0.0.0.0:4000
+npm run db:seed    # ไม่บังคับ: เพิ่มโน้ตตัวอย่าง
 ```
 
-**2. Start the app**
+**2. เริ่มแอป**
 
 ```bash
 cd app
 npm install
-cp .env.example .env    # then set EXPO_PUBLIC_API_URL
-npx expo start          # scan the QR code with Expo Go
-npx expo start --web    # or run in the browser
+cp .env.example .env    # จากนั้นตั้งค่า EXPO_PUBLIC_API_URL
+npx expo start          # สแกน QR code ด้วย Expo Go
+npx expo start --web    # หรือรันบนเบราว์เซอร์
 ```
 
-A phone must use the computer's LAN IP in `EXPO_PUBLIC_API_URL`, and port 4000 must be allowed through the
-firewall. The web build can use `http://localhost:4000`.
+หากรันบนมือถือ ต้องใช้ LAN IP ของคอมพิวเตอร์ใน `EXPO_PUBLIC_API_URL` และอนุญาตพอร์ต 4000 ใน firewall
+ส่วนเว็บใช้ `http://localhost:4000` ได้
 
-**Simulating a bad network:** set `MOCK_DELAY_MS` and `MOCK_FAIL_RATE` (0–1) when starting the server to
-add latency and random failures.
+**จำลองเครือข่ายที่ไม่เสถียร:** ตั้งค่า `MOCK_DELAY_MS` และ `MOCK_FAIL_RATE` (0–1) ตอนเริ่มเซิร์ฟเวอร์
+เพื่อเพิ่มความหน่วงและทำให้คำขอล้มเหลวแบบสุ่ม
 
-## Project structure
+## โครงสร้างโปรเจกต์
 
 ```
-app/          Expo app; source in app/src (screens, block components, stores, sync engine)
-mock-cloud/   Express + SQLite server; source in mock-cloud/src, database scripts in mock-cloud/scripts
-screenshots/  Images used in this README
+app/          แอป Expo โค้ดอยู่ใน app/src (หน้าจอ, คอมโพเนนต์บล็อก, store, ระบบซิงก์)
+mock-cloud/   เซิร์ฟเวอร์ Express + SQLite โค้ดอยู่ใน mock-cloud/src สคริปต์ฐานข้อมูลอยู่ใน mock-cloud/scripts
+screenshots/  ภาพที่ใช้ใน README นี้
 ```
 
-See [`app/README.md`](app/README.md) and [`mock-cloud/README.md`](mock-cloud/README.md) for details.
+ดูรายละเอียดเพิ่มเติมได้ที่ [`app/README.md`](app/README.md) และ [`mock-cloud/README.md`](mock-cloud/README.md)
 
-## Testing
+## การทดสอบ
 
-Testing was manual; there is no automated test suite yet.
+ทดสอบด้วยตนเองทั้งหมด ยังไม่มีการทดสอบอัตโนมัติ
 
-- **App:** tested in Chrome and on one Android device with Expo Go. Not tested on iOS.
-- **API:** missing tokens, malformed data and stale updates, checked with curl.
-- **Sync:** two devices simulated with browser tabs using separate storage, covering conflicts and deletes.
-  Also tested with `MOCK_FAIL_RATE=0.5`: retries succeeded and no data was lost.
+- **แอป:** ทดสอบบน Chrome และ Android 1 เครื่องผ่าน Expo Go แต่ยังไม่ได้ทดสอบบน iOS
+- **API:** ทดสอบด้วย curl ในกรณีไม่มี token, ข้อมูลผิดรูปแบบ และข้อมูลที่เก่ากว่า
+- **การซิงก์:** จำลอง 2 อุปกรณ์ด้วยแท็บเบราว์เซอร์ที่แยกที่เก็บข้อมูลกัน ครอบคลุมข้อมูลขัดแย้งและการลบ
+  และทดสอบด้วย `MOCK_FAIL_RATE=0.5` พบว่าระบบลองส่งซ้ำจนสำเร็จและข้อมูลไม่หาย
 
-## Known limitations
+## ข้อจำกัด
 
-- Last-write-wins applies to the whole note. If two devices edit the same note before syncing, the older
-  version is lost even when they changed different blocks.
-- Conflict resolution relies on device clocks, so a large clock difference can pick the wrong version.
-- Authentication is a fixed mock token, and traffic is plain HTTP.
-- On Android, a block that was just dragged can briefly render in the wrong position. The saved order is correct.
+- last-write-wins ตัดสินทั้งโน้ต หากสองอุปกรณ์แก้ไขโน้ตเดียวกันก่อนซิงก์ ฉบับที่เก่ากว่าจะหายทั้งฉบับ
+  แม้จะแก้ไขคนละบล็อก
+- การตัดสินเมื่อข้อมูลขัดแย้งอิงเวลาของแต่ละอุปกรณ์ หากนาฬิกาคลาดเคลื่อนมากอาจเลือกฉบับผิด
+- การยืนยันตัวตนใช้ token จำลองแบบตายตัว และรับส่งข้อมูลผ่าน HTTP ที่ไม่เข้ารหัส
+- บน Android บล็อกที่เพิ่งลากอาจแสดงผิดตำแหน่งชั่วครู่ แต่ลำดับที่บันทึกไว้ถูกต้อง
